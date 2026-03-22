@@ -137,8 +137,8 @@
   function ldChar(c) {
     const p = c === 'vovo' ? 'VOVO' : 'VOVOH';
     _pg.run.src = 'images/' + p + '.GIF';
-    _pg.jump.src = 'images/' + p + '_PULA.PNG';
-    _pg.crouch.src = 'images/' + p + '_AGACHA.PNG';
+    _pg.jump.src = 'images/' + p + '_PULA.png';
+    _pg.crouch.src = 'images/' + p + '_AGACHA.png';
   }
 
   /* ====== SCREENS ====== */
