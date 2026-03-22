@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Vovôs Memória — Jogo da Memória Runner</title>
+  <meta name="description"
+    content="Jogo endless runner com mecânica de memória. Escolha Vovô ou Vovó e teste sua memória em 3 fases!">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <span id="hud-phase">Fase 1</span>
+      <span id="hud-score">Pontos: 0</span>
+      <div id="hud-collected"></div>
+    </div>
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen">
+      <img src="images/apresentacao.png" id="title-img" alt="Vovôs Memória">
+      <button id="start-btn" class="btn-primary">START</button>
+    </div>
+
+    <!-- Select Screen -->
+    <div id="select-screen" class="screen hidden">
+      <h2 class="screen-title">Escolha seu personagem</h2>
+      <div class="character-options">
+        <div class="character-card" id="card-vovo" data-character="vovo">
+          <img src="images/VOVO_PERFIL.PNG" alt="Vovô">
+          <span class="char-label">VOVÔ</span>
+        </div>
+        <div class="character-card" id="card-vovoh" data-character="vovoh">
+          <img src="images/VOVOH_PERFIL.PNG" alt="Vovó">
+          <span class="char-label">VOVÓ</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase Intro Screen -->
+    <div id="phase-intro-screen" class="screen hidden">
+      <h2 class="screen-title">FASE <span id="phase-number">1</span></h2>
+      <p class="intro-sub">Memorize estes objetos!</p>
+      <div id="memorize-list"></div>
+      <div id="countdown-wrap">
+        <div id="countdown-bar"></div>
+        <span id="countdown">6</span>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameover-screen" class="screen hidden">
+      <h2 class="screen-title">FIM DE JOGO!</h2>
+      <div id="results">
+        <div class="result-row correct"><span class="result-label">✅ Acertos</span><span id="final-hits"
+            class="result-val">0</span></div>
+        <div class="result-row wrong"><span class="result-label">❌ Erros</span><span id="final-errors"
+            class="result-val">0</span></div>
+        <div class="result-row total"><span class="result-label">⭐ Pontuação</span><span id="final-score"
+            class="result-val">0</span></div>
+      </div>
+      <button id="restart-btn" class="btn-primary">JOGAR NOVAMENTE</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+
+</html>
