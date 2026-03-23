@@ -2,18 +2,18 @@
   'use strict';
 
   /* ====== CONFIG ====== */
-  const CW = 800, CH = 400, GROUND = 340;
+  const CW = 800, CH = 600, GROUND = 540;
   const GRAV = 0.65, JVEL = -13.5;
   const PX = 100, PW = 60, PH = 80, PCH = 40;
   const OR = 22;
   const OBJ_GY = GROUND - PH + 12;
   const OBJ_AY = GROUND - PH - 75;
   const PHASES = [
-    { n: 3, spd: 4.5, dst: 2800 },
+    { n: 3, spd: 4.5, dst: 5800 },
     { n: 4, spd: 5.5, dst: 3200 },
     { n: 5, spd: 6.5, dst: 3600 },
   ];
-  const MEM_SEC = 10;
+  const MEM_SEC = 6;
   const POOL = [
     { e: '🍎', n: 'Maçã' }, { e: '🎂', n: 'Bolo' },
     { e: '🧶', n: 'Novelo' }, { e: '📻', n: 'Rádio' },
@@ -94,13 +94,33 @@
   const MELODIES = [
     [261.63, 329.63, 392.00, 523.25, 392.00, 329.63], // Fase 1: C Major Arpeggio
     [293.66, 349.23, 440.00, 587.33, 440.00, 349.23, 261.63, 329.63, 392.00, 523.25], // Fase 2: Dm -> C
-    [329.63, 392.00, 493.88, 659.25, 493.88, 392.00, 293.66, 349.23, 440.00, 587.33]  // Fase 3: Em -> Dm (mais tenso e rápido)
+    [329.63, 392.00, 493.88, 659.25, 493.88, 392.00, 293.66, 349.23, 440.00, 587.33]  // Fase 3: Em -> Dm
   ];
-  const TEMPOS = [220, 180, 140]; // ms por nota (menor = mais rápido)
-  let _bgmIv = null, _bgmPlay = false;
+  const TEMPOS = [220, 180, 140];
+  let _bgmIv = null, _bgmPlay = false, _bgmEl = null;
 
   function playMusic(ph) {
     stopMusic();
+    const url = `audio/fase${ph + 1}.mp3`;
+
+    // Tenta carregar o arquivo externo primeiro
+    const audio = new Audio(url);
+    audio.loop = true;
+
+    // Tentativa de reprodução do arquivo (se o navegador suportar o formato)
+    audio.play()
+      .then(() => {
+        _bgmEl = audio;
+        console.log(`Reproduzindo arquivo: ${url}`);
+      })
+      .catch(() => {
+        // Se falhar (não existe ou formato não suportado), cai no fallback de osciladores
+        console.log(`Usando síntese de osciladores para fase ${ph + 1}`);
+        playSynthMusic(ph);
+      });
+  }
+
+  function playSynthMusic(ph) {
     _bgmPlay = true;
     if (_actx.state === 'suspended') _actx.resume();
 
@@ -110,18 +130,14 @@
 
     function nextNote() {
       if (!_bgmPlay) return;
-
       const o = _actx.createOscillator();
       const g = _actx.createGain();
-      o.type = 'square'; // Som estilo retro/MIDI 8-bit
+      o.type = 'square';
       o.frequency.value = notes[step];
-
-      g.gain.setValueAtTime(0.04, _actx.currentTime); // Volume baixo
+      g.gain.setValueAtTime(0.04, _actx.currentTime);
       g.gain.exponentialRampToValueAtTime(0.001, _actx.currentTime + (spd / 1000) * 0.9);
-
       o.connect(g).connect(_actx.destination);
       o.start(); o.stop(_actx.currentTime + (spd / 1000));
-
       step = (step + 1) % notes.length;
       _bgmIv = setTimeout(nextNote, spd);
     }
@@ -131,6 +147,7 @@
   function stopMusic() {
     _bgmPlay = false;
     if (_bgmIv) clearTimeout(_bgmIv);
+    if (_bgmEl) { _bgmEl.pause(); _bgmEl = null; }
   }
 
   /* ====== SPRITES ====== */
