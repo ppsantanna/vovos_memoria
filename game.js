@@ -9,8 +9,8 @@
   const OBJ_GY = GROUND - PH + 12;
   const OBJ_AY = GROUND - PH - 75;
   const PHASES = [
-    { n: 3, spd: 4.5, dst: 5800 },
-    { n: 4, spd: 5.5, dst: 6200 },
+    { n: 3, spd: 4.5, dst: 6600 },
+    { n: 4, spd: 5.5, dst: 6600 },
     { n: 5, spd: 6.5, dst: 6600 },
   ];
   const MEM_SEC = 6;
@@ -19,10 +19,13 @@
     { e: '🧶', n: 'Novelo' }, { e: '📻', n: 'Rádio' },
     { e: '👓', n: 'Óculos' }, { e: '💊', n: 'Remédio' },
     { e: '☕', n: 'Café' }, { e: '📖', n: 'Livro' },
-    { e: '🎩', n: 'Chapéu' }, { e: '🧣', n: 'Cachecol' },
+    { e: '🎩', n: 'Chapéu' }, { e: '⚽', n: 'Bola' },
     { e: '🍪', n: 'Biscoito' }, { e: '🌻', n: 'Girassol' },
-    { e: '🍰', n: 'Torta' }, { e: '🧤', n: 'Luvas' },
-    { e: '🎵', n: 'Música' },
+    { e: '🍰', n: 'Torta' }, { e: '❤️', n: 'Coração' },
+    { e: '🎵', n: 'Música' }, { e: '👧', n: 'Neta' },
+    { e: '🧑', n: 'Neto' }, { e: '🧑', n: 'Neto' },
+    { e: '🐕', n: 'Cachorro' }, { e: '🐈', n: 'Gato' },
+    { e: '📱', n: 'Celular' },
   ];
 
   /* ====== DOM ====== */
@@ -50,7 +53,7 @@
 
   /* ====== STATE ====== */
   let st = 'START', char = null, phase = 0;
-  let memo = [], coll, hits, errs, score;
+  let memo = [], coll = [], hits, errs, score;
   let tHits = 0, tErrs = 0, tScore = 0;
   let spd = 0, dist = 0;
   let py, pvy, jmp, crch, gnd;
@@ -171,7 +174,8 @@
     document.getElementById('phase-number').textContent = phase + 1;
     const pool = shuf(POOL);
     memo = pool.slice(0, cfg.n);
-    coll = new Set(); hits = 0; errs = 0; score = 0;
+    coll = new Array(memo.length).fill(false);
+    hits = 0; errs = 0; score = 0;
     const el = document.getElementById('memorize-list');
     el.innerHTML = '';
     memo.forEach(o => {
@@ -220,9 +224,9 @@
   /* ====== HUD ====== */
   function updHUD() {
     document.getElementById('hud-phase').textContent = 'Fase ' + (phase + 1);
-    document.getElementById('hud-score').textContent = 'Pontos: ' + score;
+    document.getElementById('hud-score').textContent = 'Pontos: ' + (tScore + score);
     const el = document.getElementById('hud-collected');
-    el.innerHTML = memo.map(m => '<span class="hud-obj' + (coll.has(m.n) ? ' done' : '') + '">' + m.e + '</span>').join('');
+    el.innerHTML = memo.map((m, i) => '<span class="hud-obj' + (coll[i] ? ' done' : '') + '">' + m.e + '</span>').join('');
   }
 
   /* ====== SPAWN ====== */
@@ -248,9 +252,27 @@
   function collect(it) {
     it.alive = false;
     let d = 0;
-    if (it.isMemo && !coll.has(it.n)) { coll.add(it.n); score++; hits++; d = 1; mkPart(it.x, it.y, '#4ade80'); }
-    else { score--; errs++; d = -1; mkPart(it.x, it.y, '#f87171'); }
-    pops.push({ x: it.x, y: it.y, t: d > 0 ? '+1' : '-1', c: d > 0 ? '#4ade80' : '#f87171', l: 50 });
+    if (it.isMemo) {
+      // It's a correct item! Always reward the player.
+      score++;
+      hits++;
+      d = 1;
+      mkPart(it.x, it.y, '#4ade80');
+
+      // Update the collection HUD if there's an empty slot for this item name
+      const idx = memo.findIndex((m, i) => m.n === it.n && !coll[i]);
+      if (idx !== -1) coll[idx] = true;
+    } else {
+      // Wrong item! Apply penalty.
+      score--;
+      errs++;
+      d = -1;
+      mkPart(it.x, it.y, '#f87171');
+    }
+
+    if (d !== 0) {
+      pops.push({ x: it.x, y: it.y, t: d > 0 ? '+1' : '-1', c: d > 0 ? '#4ade80' : '#f87171', l: 50 });
+    }
     updHUD();
   }
 
