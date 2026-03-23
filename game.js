@@ -10,8 +10,8 @@
   const OBJ_AY = GROUND - PH - 75;
   const PHASES = [
     { n: 3, spd: 4.5, dst: 5800 },
-    { n: 4, spd: 5.5, dst: 3200 },
-    { n: 5, spd: 6.5, dst: 3600 },
+    { n: 4, spd: 5.5, dst: 6200 },
+    { n: 5, spd: 6.5, dst: 6600 },
   ];
   const MEM_SEC = 6;
   const POOL = [
