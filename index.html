@@ -25,7 +25,51 @@
     <!-- Start Screen -->
     <div id="start-screen" class="screen">
       <img src="images/apresentacao.png" id="title-img" alt="Vovôs Memória">
-      <button id="start-btn" class="btn-primary">START</button>
+      <div id="start-actions">
+        <button id="start-btn" class="btn-primary">START</button>
+        <div id="extra-btns">
+          <button id="help-btn" class="btn-secondary" title="Como Jogar">❓</button>
+          <button id="settings-btn" class="btn-secondary" title="Configurações">⚙️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Help Screen -->
+    <div id="help-screen" class="screen hidden">
+      <h2 class="screen-title">Como Jogar?</h2>
+      <div class="help-content">
+        <p>1. Memorize os objetos que aparecerão no início de cada fase.</p>
+        <p>2. Salte (↑) ou deslize (↓) para coletar apenas esses objetos.</p>
+        <p>3. Não pegue objetos que não estavam na lista!</p>
+        <p>4. Tente chegar ao final das 3 fases com a maior pontuação.</p>
+      </div>
+      <button id="help-close-btn" class="btn-primary">ENTENDI</button>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="screen hidden">
+      <h2 class="screen-title">Ajustes</h2>
+      <div class="settings-list">
+        <div class="setting-item">
+          <label>Tamanho dos Objetos (Idosos)</label>
+          <input type="range" id="size-range" min="1" max="2" step="0.1" value="1">
+          <span id="size-val">MÉDIO</span>
+        </div>
+        <div class="setting-item">
+          <label>Volume do Som</label>
+          <input type="range" id="volume-range" min="0" max="1" step="0.1" value="0.8">
+        </div>
+        <div class="setting-item">
+          <label>Tempo de Memorização (Segundos)</label>
+          <input type="range" id="mem-range" min="3" max="15" step="1" value="6">
+          <span id="mem-val">6s</span>
+        </div>
+        <div class="setting-item checkbox">
+          <label for="mute-sound">Música e Efeitos</label>
+          <input type="checkbox" id="mute-sound" checked>
+        </div>
+      </div>
+      <button id="settings-close-btn" class="btn-primary">SALVAR</button>
     </div>
 
     <!-- Select Screen -->
