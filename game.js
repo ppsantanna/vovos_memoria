@@ -46,9 +46,10 @@
   const $muteChk = document.getElementById('mute-sound');
   const $memRange = document.getElementById('mem-range');
   const $memVal = document.getElementById('mem-val');
+  const $obsReset = document.getElementById('obstacle-reset');
 
   /* ====== PLAYER GIF OVERLAYS ====== */
-  const _pg = {}; 
+  const _pg = {};
   ['run', 'jump', 'crouch'].forEach(k => {
     const el = document.createElement('img');
     el.className = 'player-gif';
@@ -70,7 +71,8 @@
   let introIv = null;
   let runT = 0, runF = 0;
   const _vFrames = ['images/1.png', 'images/2.png', 'images/3.png', 'images/4.png'];
-  let gSize = 1, gVol = 0.8, gMute = false, gMemSec = 6;
+  const _imgUva = new Image(); _imgUva.src = 'images/uva_maker.png';
+  let gSize = 1, gVol = 0.8, gMute = false, gMemSec = 6, gObsReset = false;
 
   /* ====== HELPERS ====== */
   function shuf(a) { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = 0 | Math.random() * (i + 1);[b[i], b[j]] = [b[j], b[i]] } return b; }
@@ -95,6 +97,15 @@
     g.gain.setValueAtTime(0.15 * gVol, _actx.currentTime);
     g.gain.exponentialRampToValueAtTime(0.001, _actx.currentTime + 0.15);
     o.connect(g).connect(_actx.destination); o.start(); o.stop(_actx.currentTime + 0.15);
+  }
+  function sfxHit() {
+    if (gMute) return;
+    const o = _actx.createOscillator(); const g = _actx.createGain();
+    o.type = 'sawtooth'; o.frequency.setValueAtTime(100, _actx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, _actx.currentTime + 0.3);
+    g.gain.setValueAtTime(0.2 * gVol, _actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, _actx.currentTime + 0.3);
+    o.connect(g).connect(_actx.destination); o.start(); o.stop(_actx.currentTime + 0.3);
   }
 
   /* ====== MUSIC ====== */
@@ -169,6 +180,13 @@
 
   /* ====== SPAWN ====== */
   function spawn() {
+    const isObstacle = Math.random() < 0.45;
+    if (isObstacle) {
+      const finalSize = OR * 1.5 * gSize; //tamanho do obstáculo (1.5)
+      console.log("Spawnando obstáculo uva_maker em x=" + (CW + finalSize));
+      items.push({ x: CW + finalSize, y: GROUND - finalSize + 10, isObstacle: true, alive: true, sz: finalSize });
+      return;
+    }
     const dis = POOL.filter(i => !memo.some(m => m.n === i.n));
     let o = guarQ.length > 0 ? guarQ.pop() : (Math.random() < 0.4 ? memo[0 | Math.random() * memo.length] : dis[0 | Math.random() * dis.length]);
     const isAir = Math.random() < 0.45, finalSize = OR * gSize;
@@ -177,7 +195,21 @@
 
   /* ====== COLLECT ====== */
   function collect(it) {
-    it.alive = false; let d = it.isMemo ? 1 : -1;
+    it.alive = false;
+    if (it.isObstacle) {
+      if (gObsReset) {
+        score = 0; tScore = 0;
+        pops.push({ x: it.x, y: it.y, t: 'ZEROU!', c: '#f87171', l: 60 });
+      } else {
+        score = Math.max(0, score - 1); errs++;
+        pops.push({ x: it.x, y: it.y, t: '-1', c: '#f87171', l: 50 });
+      }
+      sfxHit();
+      mkPart(it.x, it.y, '#ffd200');
+      updHUD();
+      return;
+    }
+    let d = it.isMemo ? 1 : -1;
     if (d > 0) { score++; hits++; mkPart(it.x, it.y, '#4ade80'); const idx = memo.findIndex((m, i) => m.n === it.n && !coll[i]); if (idx !== -1) coll[idx] = true; }
     else { score--; errs++; mkPart(it.x, it.y, '#f87171'); }
     pops.push({ x: it.x, y: it.y, t: d > 0 ? '+1' : '-1', c: d > 0 ? '#4ade80' : '#f87171', l: 50 }); updHUD();
@@ -219,13 +251,13 @@
     const key = jmp ? 'jump' : (crch ? 'crouch' : 'run'), dy = py, bob = (!jmp && !crch) ? Math.sin(bobT * 0.3) * 3 : 0;
     const scX = $gc.offsetWidth / CW, scY = $gc.offsetHeight / CH;
     for (const k in _pg) {
-      if (k === key) { 
+      if (k === key) {
         const el = _pg[k], hVis = (key === 'crouch') ? 60 : PH, hDiff = PH - hVis;
-        el.style.display = 'block'; 
-        el.style.left = (PX * scX) + 'px'; 
-        el.style.top = (((dy + bob + hDiff) * scY) + 5) + 'px'; 
-        el.style.width = 'auto'; 
-        el.style.height = (hVis * scY) + 'px'; 
+        el.style.display = 'block';
+        el.style.left = (PX * scX) + 'px';
+        el.style.top = (((dy + bob + hDiff) * scY) + 5) + 'px';
+        el.style.width = 'auto';
+        el.style.height = (hVis * scY) + 'px';
       }
       else _pg[k].style.display = 'none';
     }
@@ -233,6 +265,14 @@
   function drawItems() {
     for (const it of items) {
       if (!it.alive) continue; const r = it.sz || OR;
+      if (it.isObstacle) {
+        cx.save();
+        cx.shadowBlur = 10;
+        cx.shadowColor = '#ff0000';
+        cx.drawImage(_imgUva, it.x - r, it.y - r, r * 2, r * 2);
+        cx.restore();
+        continue;
+      }
       cx.fillStyle = it.isMemo ? 'rgba(74,222,128,.18)' : 'rgba(248,113,113,.12)'; cx.beginPath(); cx.arc(it.x, it.y, r + 4, 0, Math.PI * 2); cx.fill();
       cx.strokeStyle = it.isMemo ? 'rgba(74,222,128,.4)' : 'rgba(248,113,113,.3)'; cx.lineWidth = 2; cx.stroke();
       cx.font = (28 * (it.sz / OR || 1)) + 'px serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillStyle = '#fff'; cx.fillText(it.e, it.x, it.y);
@@ -252,7 +292,7 @@
   function doJump() { if (gnd && !jmp) { jmp = true; gnd = false; pvy = JVEL; crch = false; sfxJump(); } }
   let tsy = 0; cv.addEventListener('touchstart', e => { e.preventDefault(); tsy = e.touches[0].clientY; }, { passive: false });
   cv.addEventListener('touchmove', e => { e.preventDefault(); if (st !== 'PLAYING') return; const dy = e.touches[0].clientY - tsy; if (dy > 40 && !crch) { crch = true; sfxCrouch(); } }, { passive: false });
-  cv.addEventListener('touchend', e => { e.preventDefault(); if (st !== 'PLAYING') return; const dy = e.changedTouches[0].clientY - tsy; if (dy > 40) {} else doJump(); crch = false; }, { passive: false });
+  cv.addEventListener('touchend', e => { e.preventDefault(); if (st !== 'PLAYING') return; const dy = e.changedTouches[0].clientY - tsy; if (dy > 40) { } else doJump(); crch = false; }, { passive: false });
 
   /* ====== BUTTONS ====== */
   document.getElementById('start-btn').addEventListener('click', () => { if (_actx.state === 'suspended') _actx.resume(); showSelect(); });
@@ -267,6 +307,7 @@
   });
   $volRange.addEventListener('input', () => { gVol = parseFloat($volRange.value); if (_bgmEl) _bgmEl.volume = gVol; });
   $muteChk.addEventListener('change', () => { gMute = !$muteChk.checked; if (_bgmEl) _bgmEl.muted = gMute; });
+  $obsReset.addEventListener('change', () => { gObsReset = $obsReset.checked; });
   $memRange.addEventListener('input', () => { gMemSec = parseInt($memRange.value); $memVal.textContent = gMemSec + 's'; });
   document.querySelectorAll('.character-card').forEach(card => { card.addEventListener('click', () => { char = card.dataset.character; ldChar(char); showIntro(); }); });
 
