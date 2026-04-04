@@ -152,6 +152,7 @@
   function showSettings() { hideAll(); $set.classList.remove('hidden'); }
   function showIntro() {
     hideAll(); $intro.classList.remove('hidden'); st = 'INTRO'; stopMusic();
+    document.getElementById('phase-number').textContent = phase + 1;
     const cfg = PHASES[phase]; memo = shuf(POOL).slice(0, cfg.n); coll = new Array(memo.length).fill(false);
     hits = 0; errs = 0; score = 0;
     const el = document.getElementById('memorize-list'); el.innerHTML = '';
@@ -223,7 +224,26 @@
     const ph = crch && !jmp ? PCH : PH, ptop = crch && !jmp ? GROUND - PCH : py;
     if (char === 'vovoh' && !jmp && !crch) { runT += dt * 0.18; const f = (0 | runT) % 4; if (f !== runF) { runF = f; _pg.run.src = _vFrames[runF]; } }
     dist += spd * dt; gOff = (gOff + spd * dt) % 40; spawnCd -= dt; if (spawnCd <= 0) { spawn(); spawnCd = 70 + Math.random() * 50; }
-    for (const it of items) { if (!it.alive) continue; it.x -= spd * dt; const h = it.sz || OR; if (ov(PX, ptop, PW, ph, it.x - h, it.y - h, h * 2, h * 2)) collect(it); }
+    for (const it of items) {
+      if (!it.alive) continue;
+      it.x -= spd * dt;
+      const h = it.sz || OR;
+
+      // Hitbox padding: ignore transparent edges (Margens para colisão mais precisa)
+      // Jogador: reduz largura e altura para evitar colisões no "ar"
+      const pwH = PW - 24;  // Reduz 12px de cada lado
+      const phH = ph - 15;  // Reduz 10px (5 topo, 10 base)
+      const pxH = PX + 12;
+      const pyH = ptop + 5;
+
+      // Itens/Obstáculos: reduz 25% da área para compensar espaços vazios nos cantos
+      const hH = h * 0.75;
+      const ixH = it.x - hH;
+      const iyH = it.y - hH;
+      const iszH = hH * 2;
+
+      if (ov(pxH, pyH, pwH, phH, ixH, iyH, iszH, iszH)) collect(it);
+    }
     items = items.filter(i => i.alive && i.x > -50);
     for (const c of clouds) { c.x -= c.s * dt; if (c.x < -80) { c.x = CW + 80; c.y = 30 + Math.random() * 80; } }
     for (const p of pops) { p.y -= 1.5 * dt; p.l -= dt; } pops = pops.filter(p => p.l > 0);
